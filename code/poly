@@ -1,0 +1,124 @@
+import org.json.JSONObject;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ShamirSecretSharing {
+
+    // Function to convert a number from a given base to decimal (int)
+    public static BigInteger baseToDecimal(String value, int base) {
+        return new BigInteger(value, base);
+    }
+
+    // Function to perform Lagrange interpolation to find the constant term (c)
+    public static BigInteger lagrangeInterpolation(List<Point> points, BigInteger x0) {
+        BigInteger result = BigInteger.ZERO;
+
+        for (int i = 0; i < points.size(); i++) {
+            BigInteger xi = points.get(i).x;
+            BigInteger yi = points.get(i).y;
+            BigInteger term = yi;
+
+            for (int j = 0; j < points.size(); j++) {
+                if (i != j) {
+                    BigInteger xj = points.get(j).x;
+                    term = term.multiply(x0.subtract(xj))
+                                .divide(xi.subtract(xj));
+                }
+            }
+
+            result = result.add(term);
+        }
+
+        return result;
+    }
+
+    public static void main(String[] args) {
+        // Sample input (second test case)
+        String inputJson = "{\n" +
+                "\"keys\": {\n" +
+                "\"n\": 10,\n" +
+                "\"k\": 7\n" +
+                "},\n" +
+                "\"1\": {\n" +
+                "\"base\": \"7\",\n" +
+                "\"value\": \"420020006424065463\"\n" +
+                "},\n" +
+                "\"2\": {\n" +
+                "\"base\": \"7\",\n" +
+                "\"value\": \"10511630252064643035\"\n" +
+                "},\n" +
+                "\"3\": {\n" +
+                "\"base\": \"2\",\n" +
+                "\"value\": \"101010101001100101011100000001000111010010111101100100010\"\n" +
+                "},\n" +
+                "\"4\": {\n" +
+                "\"base\": \"8\",\n" +
+                "\"value\": \"31261003022226126015\"\n" +
+                "},\n" +
+                "\"5\": {\n" +
+                "\"base\": \"7\",\n" +
+                "\"value\": \"2564201006101516132035\"\n" +
+                "},\n" +
+                "\"6\": {\n" +
+                "\"base\": \"15\",\n" +
+                "\"value\": \"a3c97ed550c69484\"\n" +
+                "},\n" +
+                "\"7\": {\n" +
+                "\"base\": \"13\",\n" +
+                "\"value\": \"134b08c8739552a734\"\n" +
+                "},\n" +
+                "\"8\": {\n" +
+                "\"base\": \"10\",\n" +
+                "\"value\": \"23600283241050447333\"\n" +
+                "},\n" +
+                "\"9\": {\n" +
+                "\"base\": \"9\",\n" +
+                "\"value\": \"375870320616068547135\"\n" +
+                "},\n" +
+                "\"10\": {\n" +
+                "\"base\": \"6\",\n" +
+                "\"value\": \"30140555423010311322515333\"\n" +
+                "}\n" +
+                "}";
+
+        // Parse the JSON
+        JSONObject jsonObject = new JSONObject(inputJson);
+        JSONObject keys = jsonObject.getJSONObject("keys");
+        int n = keys.getInt("n");
+        int k = keys.getInt("k");
+
+        List<Point> points = new ArrayList<>();
+
+        // Read each root and decode
+        for (int i = 1; i <= n; i++) {
+            JSONObject root = jsonObject.getJSONObject(String.valueOf(i));
+            int base = Integer.parseInt(root.getString("base"));
+            String value = root.getString("value");
+
+            // Convert the value from the given base to decimal
+            BigInteger decodedValue = baseToDecimal(value, base);
+
+            // Add the decoded root (x, y) where x = i and y = decoded value
+            points.add(new Point(BigInteger.valueOf(i), decodedValue));
+        }
+
+        // Perform Lagrange interpolation at x = 0 to find the constant term (c)
+        BigInteger x0 = BigInteger.ZERO;
+        BigInteger constantTerm = lagrangeInterpolation(points, x0);
+
+        // Print the constant term (c)
+        System.out.println("The constant term (c) is: " + constantTerm);
+    }
+
+    // Helper class to represent a point (x, y)
+    static class Point {
+        BigInteger x;
+        BigInteger y;
+
+        Point(BigInteger x, BigInteger y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+}
